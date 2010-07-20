@@ -25,7 +25,6 @@ $fake_register_globals=false;
 	require_once("$srcdir/patient.inc");
 	require_once("$srcdir/options.inc.php");
 	require_once("../drugs/drugs.inc.php");
-	require_once("$srcdir/formatting.inc.php");
 	
 	function add_date($givendate,$day=0,$mth=0,$yr=0) 
 	{
@@ -726,7 +725,7 @@ if ($_POST['form_refresh'])
 								<td> <?php echo htmlspecialchars(generate_display_field(array('data_type'=>'1','list_id'=>'sex'), $row['patient_sex']),ENT_NOQUOTES); ?>&nbsp;</td>
 								<td> <?php echo htmlspecialchars(generate_display_field(array('data_type'=>'1','list_id'=>'ethrace'), $row['patient_ethnic']),ENT_NOQUOTES); ?>&nbsp;</td>
 								<td> <?php echo htmlspecialchars($row['users_provider'],ENT_NOQUOTES); ?>&nbsp;</td>
-								<td> <?php echo htmlspecialchars(oeFormatShortDate($row['prescriptions_date_modified']),ENT_NOQUOTES); ?>&nbsp;</td>
+								<td> <?php echo htmlspecialchars($row['prescriptions_date_modified'],ENT_NOQUOTES); ?>&nbsp;</td>
 								<td><?php echo htmlspecialchars($prescription_id,ENT_NOQUOTES); ?></td>
 								<td><?php echo htmlspecialchars($drug_name,ENT_NOQUOTES); ?></td>
 								<td><?php echo htmlspecialchars($ndc_number,ENT_NOQUOTES); ?></td>
@@ -736,7 +735,7 @@ if ($_POST['form_refresh'])
 								<td><?php echo htmlspecialchars($reactions,ENT_NOQUOTES); ?></td>
 								<td><a href='../drugs/dispense_drug.php?sale_id=<?php echo htmlspecialchars($row['sale_id'],ENT_QUOTES); ?>'
 								style='color:#0000ff' target='_blank'>
-								<?php echo htmlspecialchars(oeFormatShortDate($row['sale_date']),ENT_NOQUOTES); ?>
+								<?php echo htmlspecialchars($row['sale_date'],ENT_NOQUOTES); ?>
 								</a>
 								</td>
 								<td><?php echo htmlspecialchars($row['quantity'],ENT_NOQUOTES); ?></td>
@@ -761,10 +760,10 @@ if ($_POST['form_refresh'])
 							<td><?php echo htmlspecialchars($row['code'],ENT_NOQUOTES); ?>&nbsp;</td>
 							<td><?php echo htmlspecialchars($row['code_text'],ENT_NOQUOTES); ?>&nbsp;</td>
 							<td><a target="RBot" href="../patient_file/summary/demographics.php?pid=<?php echo htmlspecialchars($row['patient_id'],ENT_QUOTES);?>"><?php echo htmlspecialchars($row['patient_name'],ENT_NOQUOTES); ?></a>&nbsp;</td>
-							<td><?php echo htmlspecialchars(oeFormatShortDate($row['date_of_birth']),ENT_NOQUOTES); ?>&nbsp;</td>
+							<td><?php echo htmlspecialchars($row['date_of_birth'],ENT_NOQUOTES); ?>&nbsp;</td>
 							<td><?php echo htmlspecialchars($row['patient_id'],ENT_NOQUOTES); ?>&nbsp;</td>
 							<td><a target="RBot" href="../patient_file/encounter/encounter_top.php?set_encounter=<?php echo htmlspecialchars($row['encounter'],ENT_QUOTES);?>&pid=<?php echo htmlspecialchars($row['patient_id'],ENT_QUOTES);?>"><?php echo htmlspecialchars($row['encounter'],ENT_NOQUOTES); ?></a>&nbsp;</td>
-							<td><?php echo htmlspecialchars(oeFormatShortDate($row['date']),ENT_NOQUOTES); ?>&nbsp;</td>
+							<td><?php echo htmlspecialchars($row['date'],ENT_NOQUOTES); ?>&nbsp;</td>
 							<td><?php echo htmlspecialchars($row['provider_name'],ENT_NOQUOTES); ?>&nbsp;</td>
 							<?php
 						}
@@ -786,7 +785,7 @@ if ($_POST['form_refresh'])
 						{
 						?>
 						<!-- Diagnosis -->
-						<td> <?php echo htmlspecialchars(oeFormatShortDate($row['lists_date']),ENT_NOQUOTES); ?>&nbsp;</td>
+						<td> <?php echo htmlspecialchars($row['lists_date'],ENT_NOQUOTES); ?>&nbsp;</td>
 						<td> <?php echo htmlspecialchars($row['lists_diagnosis'],ENT_NOQUOTES); ?>&nbsp;</td>
 						<td> <?php echo htmlspecialchars($row['lists_title'],ENT_NOQUOTES); ?>&nbsp;</td>
 						<?php
@@ -800,7 +799,7 @@ if ($_POST['form_refresh'])
 							$procedure_type_standard_code = $procedure_type_standard_code_arr[1];
 						?>
 						<!-- Procedure -->
-						<td> <?php echo htmlspecialchars(oeFormatShortDate($row['procedure_order_date_ordered']),ENT_NOQUOTES); ?>&nbsp;</td>
+						<td> <?php echo htmlspecialchars($row['procedure_order_date_ordered'],ENT_NOQUOTES); ?>&nbsp;</td>
 						<td> <?php echo htmlspecialchars($procedure_type_standard_code,ENT_NOQUOTES); ?>&nbsp;</td>
 						<td> <?php echo htmlspecialchars($row['procedure_name'],ENT_NOQUOTES); ?>&nbsp;</td>
 						<td> <a target="RBot" href="../patient_file/encounter/encounter_top.php?set_encounter=<?php echo htmlspecialchars($row['procedure_order_encounter'],ENT_QUOTES);?>&pid=<?php echo htmlspecialchars($row['patient_id'],ENT_QUOTES);?>"><?php echo htmlspecialchars($row['procedure_order_encounter'],ENT_NOQUOTES); ?></a>&nbsp;</td>
@@ -818,7 +817,7 @@ if ($_POST['form_refresh'])
 						{
 						?>
 						<!-- Medical History -->
-						<td> <?php echo htmlspecialchars(oeFormatShortDate($row['history_data_date']),ENT_NOQUOTES); ?>&nbsp;</td>
+						<td> <?php echo htmlspecialchars($row['history_data_date'],ENT_NOQUOTES); ?>&nbsp;</td>
 						<td> <?php echo htmlspecialchars($row['history_data_tobacco'],ENT_NOQUOTES); ?>&nbsp;</td>
 						<td> <?php echo htmlspecialchars($row['history_data_alcohol'],ENT_NOQUOTES); ?>&nbsp;</td>
 						<td> <?php echo htmlspecialchars($row['history_data_recreational_drugs'],ENT_NOQUOTES); ?>&nbsp;</td>
@@ -831,7 +830,7 @@ if ($_POST['form_refresh'])
 						{
 						?>
 						<!-- Lab Results -->
-						<td> <?php echo htmlspecialchars(oeFormatShortDate($row['procedure_result_date']),ENT_NOQUOTES); ?>&nbsp;</td>
+						<td> <?php echo htmlspecialchars($row['procedure_result_date'],ENT_NOQUOTES); ?>&nbsp;</td>
 						<td> <?php echo htmlspecialchars($row['procedure_result_facility'],ENT_NOQUOTES); ?>&nbsp;</td>
 						<td> <?php echo htmlspecialchars(generate_display_field(array('data_type'=>'1','list_id'=>'proc_unit'),$row['procedure_result_units']),ENT_NOQUOTES); ?>&nbsp;</td>
 						<td> <?php echo htmlspecialchars($row['procedure_result_result'],ENT_NOQUOTES); ?>&nbsp;</td>
