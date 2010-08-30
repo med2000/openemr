@@ -25,6 +25,7 @@ $fake_register_globals=false;
 	require_once("$srcdir/patient.inc");
 	require_once("$srcdir/options.inc.php");
 	require_once("../drugs/drugs.inc.php");
+	require_once("$srcdir/formatting.inc.php");
 	
 	function add_date($givendate,$day=0,$mth=0,$yr=0) 
 	{
@@ -35,7 +36,10 @@ $fake_register_globals=false;
 		return $newdate;
     }
 
- 	$type = $_POST["type"];
+	$type = $_POST["type"];
+	if ($type=="") {
+ 	  $type = 'Problem List';
+	}
 	$facility = isset($_POST['facility']) ? $_POST['facility'] : '';
 	$sql_date_from = fixDate($_POST['date_from'], date('Y-01-01'));
 	$sql_date_to = fixDate($_POST['date_to']  , add_date(date('Y-m-d'), -1));
@@ -46,6 +50,9 @@ $fake_register_globals=false;
 	$sql_ethnicity = $_POST["ethnicity"];
 	$form_lot_number = trim($_POST['form_lot_number']);
 	$form_drug_name = trim($_POST["form_drug_name"]);
+	$form_diagnosis = trim($_POST["form_diagnosis"]);
+	$form_lab_results = trim($_POST["form_lab_results"]);
+	$form_service_codes = trim($_POST["form_service_codes"]);
 ?>
 <html>
 <head>
@@ -66,6 +73,31 @@ $fake_register_globals=false;
   // dlgopen('../patient_file/front_payment.php?receipt=1&payid=' + payid, '_blank', 550, 400);
   return false;
  }
+
+// This is for callback by the find-code popup.
+// Appends to or erases the current list of diagnoses.
+function set_related(codetype, code, selector, codedesc) {
+ var f = document.forms[0];
+ //var s = f.form_diagnosis.value;
+ var s = '';
+ if (code) {
+  //if (s.length > 0) s += ';';
+  s += codetype + ':' + code;
+ } else {
+  s = '';
+ }
+ if (codetype=="ICD9"){
+  f.form_diagnosis.value = s;
+ }
+ if (codetype=="CPT4"){
+  f.form_service_codes.value = code;
+ }
+}
+ 
+// This invokes the find-code popup.
+function sel_code(type) {
+	dlgopen('../patient_file/encounter/find_code_popup.php?codetype='+type, '_blank', 500, 400);
+}
 
 </script>
 <link rel='stylesheet' href='<?php echo $css_header ?>' type='text/css'>
@@ -103,6 +135,39 @@ $fake_register_globals=false;
 	}
 	?>
 }
+
+.optional_area_diagnosis {
+	<?php
+	if($type != 'Problem List' || $type == '')
+	{
+	?>
+	display: none;
+	<?php
+	}
+	?>
+}
+
+.optional_area_lab_results {
+	<?php
+	if($type != 'Lab Results' || $type == '')
+	{
+	?>
+	display: none;
+	<?php
+	}
+	?>
+}
+
+.optional_area_service_codes {
+	<?php
+	if($type != 'Service Codes' || $type == '')
+	{
+	?>
+	display: none;
+	<?php
+	}
+	?>
+}
 </style>
 <script language="javascript" type="text/javascript">
 	function checkType()
@@ -114,6 +179,30 @@ $fake_register_globals=false;
 		else
 		{
 			$('.optional_area').css("display", "none");
+		}
+		if($('#type').val() == 'Problem List')
+		{
+			$('.optional_area_diagnosis').css("display", "inline");
+		}
+		else
+		{
+			$('.optional_area_diagnosis').css("display", "none");
+		}
+		if($('#type').val() == 'Lab Results')
+		{
+			$('.optional_area_lab_results').css("display", "inline");
+		}
+		else
+		{
+			$('.optional_area_lab_results').css("display", "none");
+		}
+		if($('#type').val() == 'Service Codes')
+		{
+			$('.optional_area_service_codes').css("display", "inline");
+		}
+		else
+		{
+			$('.optional_area_service_codes').css("display", "none");
 		}
 	}
 	
@@ -183,13 +272,11 @@ Search options include diagnosis, procedure, prescription, medical history, and 
 				<td width='740px'><div style='float:left'>
 						<table class='text'>
 							<tr>
-								<td class='label'><?php echo htmlspecialchars(xl('Facility'),ENT_NOQUOTES); ?>
-									: </td>
-								<td>
+								<td class='label' width="100"><?php echo htmlspecialchars(xl('Facility'),ENT_NOQUOTES); ?>: </td>
+								<td width="250">
 						                      <?php dropdown_facility($facility,'facility',false); ?>
 								</td>
-								<td class='label'><?php echo htmlspecialchars(xl('From'),ENT_NOQUOTES); ?>
-									: </td>
+								<td class='label' width="100"><?php echo htmlspecialchars(xl('From'),ENT_NOQUOTES); ?>: </td>
 								<td><input type='text' name='date_from' id="date_from" size='10' value='<?php echo htmlspecialchars($sql_date_from,ENT_QUOTES) ?>'
 				onkeyup='datekeyup(this,mypcc)' onblur='dateblur(this,mypcc)' title='yyyy-mm-dd'>
 									<img src='../pic/show_calendar.gif' align='absbottom' width='24' height='22'
@@ -211,14 +298,13 @@ Search options include diagnosis, procedure, prescription, medical history, and 
 								<td>&nbsp;</td>
 							</tr>
 							<tr>
-								<td class='label'><?php echo htmlspecialchars(xl('Age Range'),ENT_NOQUOTES); ?>
-								:</td>
+								<td class='label'><?php echo htmlspecialchars(xl('Age Range'),ENT_NOQUOTES); ?>:</td>
 								<td><? echo htmlspecialchars(xl('From'),ENT_NOQUOTES); ?>
-									<input name='age_from' class="numeric_only" type='text' id="age_from" value="<?php echo htmlspecialchars($age_from,ENT_QUOTES); ?>" size='3' maxlength='3' /><? echo htmlspecialchars(xl('To'),ENT_NOQUOTES); ?>
+									<input name='age_from' class="numeric_only" type='text' id="age_from" value="<?php echo htmlspecialchars($age_from,ENT_QUOTES); ?>" size='3' maxlength='3' /> <? echo htmlspecialchars(xl('To'),ENT_NOQUOTES); ?> 
 <input name='age_to' class="numeric_only" type='text' id="age_to" value="<?php echo htmlspecialchars($age_to,ENT_QUOTES); ?>" size='3' maxlength='3' /></td>
 								<td class='label'><?php echo htmlspecialchars(xl('Option'),ENT_QUOTES); ?>:</td>
 								<td><select name="type" id="type" onChange="checkType();">
-										<option value="Diagnosis" <?php if($type == 'Diagnosis') { echo "selected"; } ?>><?php echo htmlspecialchars(xl('Diagnosis'),ENT_NOQUOTES); ?></option>
+										<option value="Problem List" <?php if($type == 'Problem List') { echo "selected"; } ?>><?php echo htmlspecialchars(xl('Problem List'),ENT_NOQUOTES); ?></option>
 										<option value="Procedure" <?php if($type == 'Procedure') { echo "selected"; } ?>><?php echo htmlspecialchars(xl('Procedure'),ENT_NOQUOTES); ?></option>
 										<?php
 										if(!$GLOBALS['disable_prescriptions'])
@@ -235,20 +321,25 @@ Search options include diagnosis, procedure, prescription, medical history, and 
 								<td>&nbsp;</td>
 							</tr>
 							<tr>
-								<td class='label'><?php echo htmlspecialchars(xl('Gender'),ENT_NOQUOTES); ?>
-								:</td>
-								<td><?php echo generate_select_list('gender', 'sex', $gender, 'Select Gender', 'Unassigned', '', ''); ?></td>
-								<td class='label'><span class="optional_area"><?php echo htmlspecialchars(xl('Drug'),ENT_NOQUOTES); ?>:</span>&nbsp;</td>
+								<td class='label'><?php echo htmlspecialchars(xl('Gender'),ENT_NOQUOTES); ?>:</td>
+								<td><?php echo generate_select_list('gender', 'sex', $sql_gender, 'Select Gender', 'Unassigned', '', ''); ?></td>
+								<td class='label'><span class="optional_area"><?php echo htmlspecialchars(xl('Drug'),ENT_NOQUOTES); ?>:</span>
+								<span class="optional_area_diagnosis"><?php echo htmlspecialchars(xl('DX'),ENT_NOQUOTES); ?>:</span>
+								<span class="optional_area_lab_results"><?php echo htmlspecialchars(xl('Result'),ENT_NOQUOTES); ?>:</span>
+								<span class="optional_area_service_codes"><?php echo htmlspecialchars(xl('Code'),ENT_NOQUOTES); ?>:</span></td>
 								<td><span class="optional_area"><input type='text' name='form_drug_name' size='10' maxlength='250' value='<?php echo htmlspecialchars($form_drug_name,ENT_QUOTES); ?>'
-				title='<?php echo htmlspecialchars(xl('Optional drug name, use % as a wildcard'),ENT_QUOTES); ?>' /></span>&nbsp;</td>
+				title='<?php echo htmlspecialchars(xl('Optional drug name, use % as a wildcard'),ENT_QUOTES); ?>' /></span>
+								<span class="optional_area_diagnosis"><input type='text' name='form_diagnosis' size='10' maxlength='250' value='<?php echo htmlspecialchars($form_diagnosis,ENT_QUOTES); ?>' onclick='sel_code("ICD9")' title='<?php echo htmlspecialchars(xl('Click to select or change diagnoses')); ?>' readonly /></span>
+								<span class="optional_area_lab_results"><input type='text' name='form_lab_results' size='10' maxlength='250' value='<?php echo htmlspecialchars($form_lab_results,ENT_QUOTES); ?>' title='<?php echo htmlspecialchars(xl('Result, use % as a wildcard'),ENT_QUOTES); ?>' /></span>
+								<span class="optional_area_service_codes"><input type='text' name='form_service_codes' size='10' maxlength='250' value='<?php echo htmlspecialchars($form_service_codes,ENT_QUOTES); ?>' onclick='sel_code("CPT4")' title='<?php echo htmlspecialchars(xl('Click to select or change service codes')); ?>' readonly /></span>&nbsp;</td>
 								<td>&nbsp;</td>
 							</tr>
 							<tr>
 								<td class='label'><?php echo htmlspecialchars(xl('Race/Ethnicity'),ENT_NOQUOTES); ?>:</td>
-								<td><?php echo generate_select_list('ethnicity', 'ethrace', $ethnicity, 'Select Ethnicity', 'Unassigned', '', ''); ?></td>
+								<td><?php echo generate_select_list('ethnicity', 'ethrace', $sql_ethnicity, 'Select Ethnicity', 'Unassigned', '', ''); ?></td>
 								<td class='label'><span class="optional_area">
 									<?php echo htmlspecialchars(xl('Lot'),ENT_NOQUOTES); ?>
-								:</span>&nbsp;</td>
+								:</span></td>
 								<td><span class="optional_area">
 									<input type='text' name='form_lot_number' size='10' maxlength='20' value='<?php echo htmlspecialchars($form_lot_number,ENT_QUOTES); ?>'
 				title='<?php echo htmlspecialchars(xl('Optional lot number, use % as a wildcard'),ENT_QUOTES); ?>' />
@@ -257,7 +348,7 @@ Search options include diagnosis, procedure, prescription, medical history, and 
 							</tr>
 						</table>
 				</div></td>
-				<td height="100%" align='left' valign='middle'><table style='border-left:1px solid; width:100%; height:100%' >
+				<td height="100%" valign='middle' width="175"><table style='border-left:1px solid; width:100%; height:100%'>
 						<tr>
 							<td><div style='margin-left:15px'> <a href='#' class='css_button' onclick='submitForm();'> <span>
 									<?php echo htmlspecialchars(xl('Submit'),ENT_NOQUOTES); ?>
@@ -363,13 +454,13 @@ if ($_POST['form_refresh'])
 	{
 		$sqlstmt = "select
 		concat(pd.fname, ' ', pd.lname) AS patient_name,
-		pd.id AS patient_id,
+		pd.pid AS patient_id,
 		DATE_FORMAT(FROM_DAYS(DATEDIFF(NOW(),pd.dob)), '%Y')+0 AS patient_age,
 		pd.sex AS patient_sex,
 		pd.ethnoracial AS patient_ethnic,
 		concat(u.fname, ' ', u.lname)  AS users_provider, ";
 
-		if ( $type == 'Diagnosis' )
+		if ( $type == 'Problem List' )
 
 		{
 			$sqlstmt = $sqlstmt."li.date AS lists_date,
@@ -426,9 +517,15 @@ if ($_POST['form_refresh'])
          $sqlstmt = $sqlstmt."left outer join users as u on u.id = pd.providerid
             left outer join facility as f on f.id = u.facility_id ";
 
-		if($type == 'Diagnosis')
+		if($type == 'Problem List')
 		{
-			$sqlstmt = $sqlstmt." left outer join lists as li on li.pid  = pd.id ";   
+			$sqlstmt = $sqlstmt." left outer join lists as li on li.pid  = pd.pid ";
+			
+			if(strlen($form_diagnosis) != 0)
+			{
+				$sqlstmt = $sqlstmt." AND (li.diagnosis LIKE ? or li.diagnosis LIKE ? or li.diagnosis LIKE ? or li.diagnosis = ?) ";
+				array_push($sqlBindArray, $form_diagnosis.";%", '%;'.$form_diagnosis.';%', '%;'.$form_diagnosis, $form_diagnosis);
+			}
 		}
 		
 		if ( $type == 'Procedure' || $type == 'Lab Results' )
@@ -447,7 +544,7 @@ if ($_POST['form_refresh'])
 		
 		if ( $type == 'Medical History')
 		{
-         $sqlstmt = $sqlstmt."left outer join history_data as hd on hd.pid   =  pd.id 
+         $sqlstmt = $sqlstmt."left outer join history_data as hd on hd.pid   =  pd.pid 
             and (isnull(hd.tobacco)  = 0
             or isnull(hd.alcohol)  = 0
             or isnull(hd.recreational_drugs)  = 0)      ";
@@ -455,12 +552,12 @@ if ($_POST['form_refresh'])
 		
       if($type == 'Service Codes')
 		{
-         $sqlstmt = $sqlstmt."left outer join billing as b on b.pid = pd.id
+         $sqlstmt = $sqlstmt."left outer join billing as b on b.pid = pd.pid
             left outer join form_encounter as fe on fe.encounter = b.encounter and   b.code_type = 'CPT4'
             left outer join codes as c on c.code = b.code ";
       }
 
-		if ( $type == 'Diagnosis')
+		if ( $type == 'Problem List')
 		{	$dt_field = 'li.date';	}
 		if ( $type == 'Medical History')
 		{	$dt_field = 'hd.date';	}
@@ -474,9 +571,27 @@ if ($_POST['form_refresh'])
 		$sqlstmt = $sqlstmt."   where $dt_field >= ? AND $dt_field < DATE_ADD(?, INTERVAL 1 DAY) AND $dt_field < ?";
 	        array_push($sqlBindArray, $sql_date_from, $sql_date_to, date("Y-m-d"));
 	    
+		if($type == 'Lab Results')
+		{
+			if(strlen($form_lab_results) != 0)
+			{
+				$sqlstmt = $sqlstmt." AND (pr.result LIKE ?) ";
+				array_push($sqlBindArray, $form_lab_results);
+			}
+		}
+		
+		if($type == 'Service Codes')
+		{
+			if(strlen($form_service_codes) != 0)
+			{
+				$sqlstmt = $sqlstmt." AND (b.code = ?) ";
+				array_push($sqlBindArray, $form_service_codes);
+			}
+		}
+		
 		if ( strlen($patient_id) != 0)
 		{
-		    $sqlstmt = $sqlstmt."   and pd.id = ?";
+		    $sqlstmt = $sqlstmt."   and pd.pid = ?";
 		    array_push($sqlBindArray, $patient_id);
 		}
 		
@@ -502,17 +617,24 @@ if ($_POST['form_refresh'])
 		    array_push($sqlBindArray, $sql_ethnicity);
 		}
 
-      if($facility != '0')
+      if($facility != '')
 		{
 			$sqlstmt = $sqlstmt."   and f.id = ? ";
 		        array_push($sqlBindArray, $facility);
 		}
 	  
-	  if($type == 'Diagnosis')
+	  if($type == 'Problem List')
 		{
+			if(strlen($form_diagnosis) != 0)
+			{
+				$sqlstmt = $sqlstmt." AND (li.diagnosis LIKE ? or li.diagnosis LIKE ? or li.diagnosis LIKE ? or li.diagnosis = ?) ";
+				array_push($sqlBindArray, $form_diagnosis.";%", '%;'.$form_diagnosis.';%', '%;'.$form_diagnosis, $form_diagnosis);
+			}
+			else
+			{
 			$sqlstmt = $sqlstmt." union   
             select   concat(pd.fname, ' ', pd.lname),
-               pd.id,
+               pd.pid,
                DATE_FORMAT(FROM_DAYS(DATEDIFF(NOW(),pd.dob)), '%Y')+0,
                pd.sex,
                pd.ethnoracial,
@@ -523,12 +645,12 @@ if ($_POST['form_refresh'])
             from	patient_data as pd
             left outer join users as u on u.id = pd.providerid
             left outer join facility as f on f.id = u.facility_id
-            left outer join form_encounter as fe on fe.pid  = pd.id 
-               and fe.date >=  ? AND fe.date <=  ?   ";
+            left outer join form_encounter as fe on fe.pid  = pd.pid 
+               and fe.date >=  ? AND fe.date <=  ?   where 1=1";
 	    array_push($sqlBindArray, $sql_date_from, $sql_date_to);
          if ( strlen($patient_id) != 0)
          {
-	     $sqlstmt = $sqlstmt."   where pd.id = ?";
+	     $sqlstmt = $sqlstmt."   and pd.pid = ?";
 	     array_push($sqlBindArray, $patient_id);
 	 }
          if ( strlen($age_from) != 0)
@@ -557,11 +679,12 @@ if ($_POST['form_refresh'])
 		     $sqlstmt = $sqlstmt."   and f.id = ? ";
 		     array_push($sqlBindArray, $facility);
 		 }
+		 	}
 		}
       
    }
    	
-	//echo $sqlstmt;
+	// echo $sqlstmt;
 
 	$result = sqlStatement($sqlstmt,$sqlBindArray);
 
@@ -619,10 +742,10 @@ if ($_POST['form_refresh'])
 					?>
 					
 					<?php
-					if($type == 'Diagnosis')
+					if($type == 'Problem List')
 					{
 					?>
-					<!-- Diagnosis -->
+					<!-- Problem List -->
 					<th> <?php echo htmlspecialchars(xl('Date'),ENT_NOQUOTES); ?></th>
 					<th> <?php echo htmlspecialchars(xl('DX'),ENT_NOQUOTES); ?></th>
 					<th> <?php echo htmlspecialchars(xl('Diagnosis Name'),ENT_NOQUOTES); ?></th>
@@ -725,7 +848,7 @@ if ($_POST['form_refresh'])
 								<td> <?php echo htmlspecialchars(generate_display_field(array('data_type'=>'1','list_id'=>'sex'), $row['patient_sex']),ENT_NOQUOTES); ?>&nbsp;</td>
 								<td> <?php echo htmlspecialchars(generate_display_field(array('data_type'=>'1','list_id'=>'ethrace'), $row['patient_ethnic']),ENT_NOQUOTES); ?>&nbsp;</td>
 								<td> <?php echo htmlspecialchars($row['users_provider'],ENT_NOQUOTES); ?>&nbsp;</td>
-								<td> <?php echo htmlspecialchars($row['prescriptions_date_modified'],ENT_NOQUOTES); ?>&nbsp;</td>
+								<td> <?php echo htmlspecialchars(oeFormatShortDate($row['prescriptions_date_modified']),ENT_NOQUOTES); ?>&nbsp;</td>
 								<td><?php echo htmlspecialchars($prescription_id,ENT_NOQUOTES); ?></td>
 								<td><?php echo htmlspecialchars($drug_name,ENT_NOQUOTES); ?></td>
 								<td><?php echo htmlspecialchars($ndc_number,ENT_NOQUOTES); ?></td>
@@ -735,7 +858,7 @@ if ($_POST['form_refresh'])
 								<td><?php echo htmlspecialchars($reactions,ENT_NOQUOTES); ?></td>
 								<td><a href='../drugs/dispense_drug.php?sale_id=<?php echo htmlspecialchars($row['sale_id'],ENT_QUOTES); ?>'
 								style='color:#0000ff' target='_blank'>
-								<?php echo htmlspecialchars($row['sale_date'],ENT_NOQUOTES); ?>
+								<?php echo htmlspecialchars(oeFormatShortDate($row['sale_date']),ENT_NOQUOTES); ?>
 								</a>
 								</td>
 								<td><?php echo htmlspecialchars($row['quantity'],ENT_NOQUOTES); ?></td>
@@ -760,10 +883,10 @@ if ($_POST['form_refresh'])
 							<td><?php echo htmlspecialchars($row['code'],ENT_NOQUOTES); ?>&nbsp;</td>
 							<td><?php echo htmlspecialchars($row['code_text'],ENT_NOQUOTES); ?>&nbsp;</td>
 							<td><a target="RBot" href="../patient_file/summary/demographics.php?pid=<?php echo htmlspecialchars($row['patient_id'],ENT_QUOTES);?>"><?php echo htmlspecialchars($row['patient_name'],ENT_NOQUOTES); ?></a>&nbsp;</td>
-							<td><?php echo htmlspecialchars($row['date_of_birth'],ENT_NOQUOTES); ?>&nbsp;</td>
+							<td><?php echo htmlspecialchars(oeFormatShortDate($row['date_of_birth']),ENT_NOQUOTES); ?>&nbsp;</td>
 							<td><?php echo htmlspecialchars($row['patient_id'],ENT_NOQUOTES); ?>&nbsp;</td>
 							<td><a target="RBot" href="../patient_file/encounter/encounter_top.php?set_encounter=<?php echo htmlspecialchars($row['encounter'],ENT_QUOTES);?>&pid=<?php echo htmlspecialchars($row['patient_id'],ENT_QUOTES);?>"><?php echo htmlspecialchars($row['encounter'],ENT_NOQUOTES); ?></a>&nbsp;</td>
-							<td><?php echo htmlspecialchars($row['date'],ENT_NOQUOTES); ?>&nbsp;</td>
+							<td><?php echo htmlspecialchars(oeFormatShortDate($row['date']),ENT_NOQUOTES); ?>&nbsp;</td>
 							<td><?php echo htmlspecialchars($row['provider_name'],ENT_NOQUOTES); ?>&nbsp;</td>
 							<?php
 						}
@@ -781,11 +904,11 @@ if ($_POST['form_refresh'])
 						?>
 						
 						<?php
-						if($type == 'Diagnosis')
+						if($type == 'Problem List')
 						{
 						?>
-						<!-- Diagnosis -->
-						<td> <?php echo htmlspecialchars($row['lists_date'],ENT_NOQUOTES); ?>&nbsp;</td>
+						<!-- Problem List -->
+						<td> <?php echo htmlspecialchars(oeFormatShortDate($row['lists_date']),ENT_NOQUOTES); ?>&nbsp;</td>
 						<td> <?php echo htmlspecialchars($row['lists_diagnosis'],ENT_NOQUOTES); ?>&nbsp;</td>
 						<td> <?php echo htmlspecialchars($row['lists_title'],ENT_NOQUOTES); ?>&nbsp;</td>
 						<?php
@@ -799,7 +922,7 @@ if ($_POST['form_refresh'])
 							$procedure_type_standard_code = $procedure_type_standard_code_arr[1];
 						?>
 						<!-- Procedure -->
-						<td> <?php echo htmlspecialchars($row['procedure_order_date_ordered'],ENT_NOQUOTES); ?>&nbsp;</td>
+						<td> <?php echo htmlspecialchars(oeFormatShortDate($row['procedure_order_date_ordered']),ENT_NOQUOTES); ?>&nbsp;</td>
 						<td> <?php echo htmlspecialchars($procedure_type_standard_code,ENT_NOQUOTES); ?>&nbsp;</td>
 						<td> <?php echo htmlspecialchars($row['procedure_name'],ENT_NOQUOTES); ?>&nbsp;</td>
 						<td> <a target="RBot" href="../patient_file/encounter/encounter_top.php?set_encounter=<?php echo htmlspecialchars($row['procedure_order_encounter'],ENT_QUOTES);?>&pid=<?php echo htmlspecialchars($row['patient_id'],ENT_QUOTES);?>"><?php echo htmlspecialchars($row['procedure_order_encounter'],ENT_NOQUOTES); ?></a>&nbsp;</td>
@@ -817,7 +940,7 @@ if ($_POST['form_refresh'])
 						{
 						?>
 						<!-- Medical History -->
-						<td> <?php echo htmlspecialchars($row['history_data_date'],ENT_NOQUOTES); ?>&nbsp;</td>
+						<td> <?php echo htmlspecialchars(oeFormatShortDate($row['history_data_date']),ENT_NOQUOTES); ?>&nbsp;</td>
 						<td> <?php echo htmlspecialchars($row['history_data_tobacco'],ENT_NOQUOTES); ?>&nbsp;</td>
 						<td> <?php echo htmlspecialchars($row['history_data_alcohol'],ENT_NOQUOTES); ?>&nbsp;</td>
 						<td> <?php echo htmlspecialchars($row['history_data_recreational_drugs'],ENT_NOQUOTES); ?>&nbsp;</td>
@@ -830,7 +953,7 @@ if ($_POST['form_refresh'])
 						{
 						?>
 						<!-- Lab Results -->
-						<td> <?php echo htmlspecialchars($row['procedure_result_date'],ENT_NOQUOTES); ?>&nbsp;</td>
+						<td> <?php echo htmlspecialchars(oeFormatShortDate($row['procedure_result_date']),ENT_NOQUOTES); ?>&nbsp;</td>
 						<td> <?php echo htmlspecialchars($row['procedure_result_facility'],ENT_NOQUOTES); ?>&nbsp;</td>
 						<td> <?php echo htmlspecialchars(generate_display_field(array('data_type'=>'1','list_id'=>'proc_unit'),$row['procedure_result_units']),ENT_NOQUOTES); ?>&nbsp;</td>
 						<td> <?php echo htmlspecialchars($row['procedure_result_result'],ENT_NOQUOTES); ?>&nbsp;</td>
