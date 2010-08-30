@@ -1,5 +1,5 @@
 <?php
-// Copyright (C) 2007-2009 Rod Roark <rod@sunsetsystems.com>
+// Copyright (C) 2007-2010 Rod Roark <rod@sunsetsystems.com>
 // Copyright © 2010 by Andrew Moore <amoore@cpan.org>
 // Copyright © 2010 by "Boyd Stephen Smith Jr." <bss@iguanasuicide.net>
 //
@@ -18,6 +18,7 @@
 
 require_once("formdata.inc.php");
 require_once("formatting.inc.php");
+require_once("user.inc");
 
 $date_init = "";
 
@@ -73,8 +74,9 @@ function generate_select_list($tag_name, $list_id, $currvalue, $title,
   return $s;
 }
 
-
-
+// $frow is a row from the layout_options table.
+// $currvalue is the current value, if any, of the associated item.
+//
 function generate_form_field($frow, $currvalue) {
   global $rootdir, $date_init;
 
@@ -129,6 +131,8 @@ function generate_form_field($frow, $currvalue) {
       " value='$currescaped'";
     if (strpos($frow['edit_options'], 'C') !== FALSE)
       echo " onchange='capitalizeMe(this)'";
+    else if (strpos($frow['edit_options'], 'U') !== FALSE)
+      echo " onchange='this.value = this.value.toUpperCase()'";
     $tmp = htmlspecialchars( $GLOBALS['gbl_mask_patient_id'], ENT_QUOTES);
     if ($field_id == 'pubpid' && strlen($tmp) > 0) {
       echo " onkeyup='maskkeyup(this,\"$tmp\")'";
@@ -272,7 +276,7 @@ function generate_form_field($frow, $currvalue) {
     echo "</select>";
   }
 
-  // a billing code (only one of these allowed!)
+  // a billing code
   else if ($data_type == 15) {
     $fldlength = htmlspecialchars( $frow['fld_length'], ENT_QUOTES);
     $maxlength = htmlspecialchars( $frow['max_length'], ENT_QUOTES);
@@ -283,7 +287,7 @@ function generate_form_field($frow, $currvalue) {
       " maxlength='$maxlength'" .
       " title='$description'" .
       " value='$currescaped'" .
-      " onclick='sel_related()' readonly" .
+      " onclick='sel_related(this)' readonly" .
       " />";
   }
 
@@ -631,6 +635,11 @@ function generate_form_field($frow, $currvalue) {
     echo " />".htmlspecialchars( xl('N/A'), ENT_QUOTES)."&nbsp;</td>";
     echo "</tr>";
     echo "</table>";
+  }
+
+  // static text.  read-only, of course.
+  else if ($data_type == 31) {
+    echo nl2br($frow['description']);
   }
 
 }
@@ -1072,6 +1081,11 @@ function generate_print_field($frow, $currvalue) {
     echo "</table>";
   }
 
+  // static text.  read-only, of course.
+  else if ($data_type == 31) {
+    echo nl2br($frow['description']);
+  }
+
 }
 
 function generate_display_field($frow, $currvalue) {
@@ -1303,6 +1317,11 @@ function generate_display_field($frow, $currvalue) {
     if ($restype == "quit".$field_id) $s .= "<td class='text' valign='top'>" . htmlspecialchars($resdate,ENT_NOQUOTES) . "&nbsp;</td>";
     $s .= "</tr>";
     $s .= "</table>";
+  }
+
+  // static text.  read-only, of course.
+  else if ($data_type == 31) {
+    $s .= nl2br($frow['description']);
   }
 
   return $s;
@@ -1879,6 +1898,78 @@ function dropdown_facility($selected = '', $name = 'form_facility', $allow_unspe
     echo "    <option value='$option_value' label='$option_label' selected='selected'>$option_content</option>\n";
   }
   echo "   </select>\n";
+}
+
+// Expand Collapse Widget
+//  This forms the header and functionality component of the widget. The information that is displayed
+//  then follows this function followed by a closing div tag
+//
+// $title is the title of the section (already translated)
+// $label is identifier used in the tag id's and sql columns
+// $buttonLabel is the button label text (already translated)
+// $buttonLink is the button link information
+// $buttonClass is any additional needed class elements for the button tag
+// $linkMethod is the button link method ('javascript' vs 'html')
+// $bodyClass is to set class(es) of the body
+// $auth is a flag to decide whether to show the button
+// $fixedWidth is to flag whether width is fixed
+//
+function expand_collapse_widget($title, $label, $buttonLabel, $buttonLink, $buttonClass, $linkMethod, $bodyClass, $auth, $fixedWidth) {
+  if ($fixedWidth) {
+    echo "<div class='section-header'>";
+  }
+  else {
+    echo "<div class='section-header-dynamic'>";
+  }
+  echo "<table><tr>";
+  if ($auth) {
+    // show button, since authorized
+    // first prepare class string
+    if ($buttonClass) {
+      $class_string = "css_button_small ".htmlspecialchars( $buttonClass, ENT_NOQUOTES);
+    }
+    else {
+      $class_string = "css_button_small";
+    }
+    // next, create the link
+    if ($linkMethod == "javascript") {
+      echo "<td><a class='" . $class_string . "' href='javascript:;' onclick='" . $buttonLink . "'";
+    }
+    else {
+      echo "<td><a class='" . $class_string . "' href='" . $buttonLink . "'" .
+        " onclick='top.restoreSession()'";
+    }
+    if (!$GLOBALS['concurrent_layout']) {
+      echo " target='Main'";
+    }
+    echo "><span>" .
+      htmlspecialchars( $buttonLabel, ENT_NOQUOTES) . "</span></a></td>";
+  }
+  echo "<td><a href='javascript:;' class='small' onclick='toggleIndicator(this,\"" .
+    htmlspecialchars( $label, ENT_QUOTES) . "_ps_expand\")'><span class='text'><b>";
+  echo htmlspecialchars( $title, ENT_NOQUOTES) . "</b></span>";
+  if (getUserSetting($label."_ps_expand")) {
+    $text = xl('collapse');
+  }
+  else {
+    $text = xl('expand');
+  }
+  echo " (<span class='indicator'>" . htmlspecialchars($text, ENT_QUOTES) .
+    "</span>)</a></td>";
+  echo "</tr></table>";
+  echo "</div>";
+  if (getUserSetting($label."_ps_expand")) {
+    $styling = "";
+  }
+  else {
+    $styling = "style='display:none'";
+  }
+  if ($bodyClass) {
+    $styling .= " class='" . $bodyClass . "'";
+  }
+  //next, create the first div tag to hold the information
+  // note the code that calls this function will then place the ending div tag after the data
+  echo "<div id='" . htmlspecialchars( $label, ENT_QUOTES) . "_ps_expand' " . $styling . ">";
 }
 
 ?>

@@ -135,41 +135,40 @@ function sendimage(pid, what) {
 
 <script type="text/javascript">
 
-function toggle( target, div ) {
+function toggleIndicator(target,div) {
 
     $mode = $(target).find(".indicator").text();
     if ( $mode == "<?php echo htmlspecialchars(xl('collapse'),ENT_QUOTES); ?>" ) {
         $(target).find(".indicator").text( "<?php echo htmlspecialchars(xl('expand'),ENT_QUOTES); ?>" );
-        $(div).hide();
+        $("#"+div).hide();
+	$.post( "../../../library/ajax/user_settings.php", { target: div, mode: 0 });
     } else {
         $(target).find(".indicator").text( "<?php echo htmlspecialchars(xl('collapse'),ENT_QUOTES); ?>" );
-        $(div).show();
+        $("#"+div).show();
+	$.post( "../../../library/ajax/user_settings.php", { target: div, mode: 1 });
     }
-
 }
 
 $(document).ready(function(){
 
-    $("#dem_view").click( function() {
-        toggle( $(this), "#DEM" );
-    });
-
-    $("#his_view").click( function() {
-        toggle( $(this), "#HIS" );
-    });
-
-    $("#ins_view").click( function() {
-        toggle( $(this), "#INSURANCE" );
-    });
-
-    $("#notes_view").click( function() {
-        toggle( $(this), "#notes_div" );
-    });
-
     // load divs
-    $("#stats_div").load("stats.php");
-    $("#notes_div").load("pnotes_fragment.php");
-
+    $("#stats_div").load("stats.php", { 'embeddedScreen' : true }, function() {
+	// (note need to place javascript code here also to get the dynamic link to work)
+        $(".rx_modal").fancybox( {
+                'overlayOpacity' : 0.0,
+                'showCloseButton' : true,
+                'frameHeight' : 500,
+                'frameWidth' : 800,
+        	'centerOnScroll' : false,
+        	'callbackOnClose' : function()  {
+                refreshme();
+        	}
+        });
+    });
+    $("#pnotes_ps_expand").load("pnotes_fragment.php");
+    $("#disclosures_ps_expand").load("disc_fragment.php");
+    $("#vitals_ps_expand").load("vitals_fragment.php");
+	
     // fancy box
     enable_modals();
 
@@ -193,25 +192,11 @@ $(document).ready(function(){
         'centerOnScroll' : false
 	});
 
-
-    // special size for
-	$(".rx_modal").fancybox( {
-		'overlayOpacity' : 0.0,
-		'showCloseButton' : true,
-		'frameHeight' : 500,
-		'frameWidth' : 800,
-        'centerOnScroll' : false,
-        'callbackOnClose' : function()  {
-            refreshme();
-        }
-	});
-
-
 });
 </script>
 
 <style type="css/text">
-    #notes_div {
+    #pnotes_ps_expand {
         height:auto;
         width:100%;
     }
@@ -240,16 +225,9 @@ $(document).ready(function(){
 
  if ($thisauth == 'write') {
   foreach (pic_array() as $var) {print $var;}
-  echo "<td><a href='demographics_full.php'";
-  if (! $GLOBALS['concurrent_layout']) echo " target='Main'";
-  echo " onclick='top.restoreSession()'><span class='title'>" .
+  echo "<td><span class='title'>" .
    htmlspecialchars(getPatientName($pid),ENT_NOQUOTES) .
-   "</span></a>&nbsp;&nbsp;</td>";
-
-  echo "<td><a class='css_button' href='demographics_full.php'";
-  if (! $GLOBALS['concurrent_layout']) echo " target='Main'";
-  echo " onclick='top.restoreSession()'><span>" .
-  htmlspecialchars(xl("Edit" ),ENT_NOQUOTES). "</span></a></td>";
+   "</span>&nbsp;&nbsp;</td>";
 
   if (acl_check('admin', 'super')) {
    echo "<td><a class='css_button iframe' href='../deleter.php?patient=" . 
@@ -291,16 +269,14 @@ if ($GLOBALS['patient_id_category_name']) {
 
 <tr>
 <td class="small" colspan='4'>
-<a href="rx_frameset.php" class='iframe rx_modal' onclick='top.restoreSession()'>
-<?php echo htmlspecialchars(xl('Rx'),ENT_NOQUOTES); ?></a>
-|
 <a href="../history/history.php" onclick='top.restoreSession()'>
 <?php echo htmlspecialchars(xl('History'),ENT_NOQUOTES); ?></a>
 |
 <a href="../report/patient_report.php" class='iframe  medium_modal' onclick='top.restoreSession()'>
 <?php echo htmlspecialchars(xl('Report'),ENT_NOQUOTES); ?></a>
 |
-<a href="../../../controller.php?document&list&patient_id=<?php echo $pid;?>" class='iframe medium_modal' onclick='top.restoreSession()'>
+<?php //note that we have temporarily removed document screen from the modul view ?>
+<a href="../../../controller.php?document&list&patient_id=<?php echo $pid;?>" onclick='top.restoreSession()'>
 <?php echo htmlspecialchars(xl('Documents'),ENT_NOQUOTES); ?></a>
 |
 <a href="../transaction/transactions.php" class='iframe large_modal' onclick='top.restoreSession()'>
@@ -318,18 +294,25 @@ if ($GLOBALS['patient_id_category_name']) {
 		<table cellspacing=0 cellpadding=0>
 		<tr>
 			<td>
-				<div class="section-header">
-					<a href='javascript:;' class='small' id='dem_view'><span class='text'><b>
-					<?php echo htmlspecialchars(xl("Demographics"),ENT_NOQUOTES); ?></b></span> (<span class="indicator"><?php echo htmlspecialchars(xl('collapse'),ENT_QUOTES); ?></span>)</a>
-				</div>
+				<?php // Demographics expand collapse widget
+				$widgetTitle = xl("Demographics");
+				$widgetLabel = "demographics";
+				$widgetButtonLabel = xl("Edit");
+				$widgetButtonLink = "demographics_full.php";
+				$widgetButtonClass = "";
+				$linkMethod = "html";
+				$bodyClass = "";
+				$widgetAuth = ($thisauth == "write");
+				$fixedWidth = true;
+				expand_collapse_widget($widgetTitle, $widgetLabel, $widgetButtonLabel , $widgetButtonLink, $widgetButtonClass, $linkMethod, $bodyClass, $widgetAuth, $fixedWidth); ?>
 
-				<!-- Demographics -->
-				<div id="DEM">
+					<div id="DEM" >
 					<ul class="tabNav">
 					   <?php display_layout_tabs('DEM', $result, $result2); ?>
 					</ul>
 					<div class="tabContainer">
 					   <?php display_layout_tabs_data('DEM', $result, $result2); ?>
+					</div>
 					</div>
 				</div>
 			</td>
@@ -355,12 +338,17 @@ if ($GLOBALS['patient_id_category_name']) {
 		   if ( $insurance_count > 0 ) {
 
 		   ?>
-			<div class="section-header">
-				<a href='javascript:;' class='small' id='ins_view'><span class='text'><b>
-				<?php echo htmlspecialchars(xl("Insurance"),ENT_NOQUOTES); ?></b></span> (<span class="indicator"><?php echo htmlspecialchars(xl('collapse'),ENT_QUOTES); ?></span>)</a>
-			</div>
-
-			<div id="INSURANCE">
+			<?php // Insurance expand collapse widget
+			$widgetTitle = xl("Insurance");
+			$widgetLabel = "insurance";
+			$widgetButtonLabel = xl("Edit");
+			$widgetButtonLink = "demographics_full.php";
+			$widgetButtonClass = "";
+			$linkMethod = "html";
+			$bodyClass = "";
+			$widgetAuth = ($thisauth == "write");
+			$fixedWidth = true;
+			expand_collapse_widget($widgetTitle, $widgetLabel, $widgetButtonLabel , $widgetButtonLink, $widgetButtonClass, $linkMethod, $bodyClass, $widgetAuth, $fixedWidth); ?>
 
 			   <?php
 			   if ( $insurance_count > 1 ) {
@@ -526,16 +514,65 @@ if ($GLOBALS['patient_id_category_name']) {
 
 		<tr>
 			<td width='650px'>
-				<div class="section-header">
-                    <a href='javascript:;' class='small' id='notes_view'><span class='text'><b><?php echo htmlspecialchars(xl("Notes"),ENT_NOQUOTES);?></b></span> (<span class="indicator"><?php echo htmlspecialchars(xl('collapse'),ENT_QUOTES); ?></span>)</a>
-				</div>
-				<!-- Demographics -->
-                <div id='notes_div' class='tab current' style='height:auto; width:100%' >
+		<?php // Notes expand collapse widget
+		$widgetTitle = xl("Notes");
+		$widgetLabel = "pnotes";
+		$widgetButtonLabel = xl("Edit");
+		$widgetButtonLink = "pnotes_full.php";
+		$widgetButtonClass = "";
+		$linkMethod = "html";
+		$bodyClass = "tab current";
+		$widgetAuth = true;
+		$fixedWidth = true;
+		expand_collapse_widget($widgetTitle, $widgetLabel, $widgetButtonLabel , $widgetButtonLink, $widgetButtonClass, $linkMethod, $bodyClass, $widgetAuth, $fixedWidth); ?>
                     <br/>
                     <div style='margin-left:10px' class='text'><image src='../../pic/ajax-loader.gif'/></div><br/>
                 </div>
 			</td>
 		</tr>
+		 <tr>
+                        <td width='650px'>
+		<?php // disclosures expand collapse widget
+		$widgetTitle = xl("Disclosures");
+		$widgetLabel = "disclosures";
+		$widgetButtonLabel = xl("Edit");
+		$widgetButtonLink = "disclosure_full.php";
+		$widgetButtonClass = "";
+		$linkMethod = "html";
+		$bodyClass = "tab current";
+		$widgetAuth = true;
+		$fixedWidth = true;
+		expand_collapse_widget($widgetTitle, $widgetLabel, $widgetButtonLabel , $widgetButtonLink, $widgetButtonClass, $linkMethod, $bodyClass, $widgetAuth, $fixedWidth); ?>
+                    <br/>
+                    <div style='margin-left:10px' class='text'><image src='../../pic/ajax-loader.gif'/></div><br/>
+                </div>
+                        </td>
+              </tr>		
+                 <tr>
+                        <td width='650px'>
+                <?php // vitals expand collapse widget
+                $widgetTitle = xl("Vitals");
+                $widgetLabel = "vitals";
+                $widgetButtonLabel = xl("Trend");
+                $widgetButtonLink = "../encounter/trend_form.php?formname=vitals";
+                $widgetButtonClass = "";
+                $linkMethod = "html";
+                $bodyClass = "tab current";
+                // check to see if any vitals exist
+                $existVitals = sqlQuery("SELECT * FROM form_vitals WHERE pid=?", array($pid) );
+                if ($existVitals) {
+                  $widgetAuth = true;
+		}
+		else {
+		  $widgetAuth = false;   
+		}
+                $fixedWidth = true;
+                expand_collapse_widget($widgetTitle, $widgetLabel, $widgetButtonLabel , $widgetButtonLink, $widgetButtonClass, $linkMethod, $bodyClass, $widgetAuth, $fixedWidth); ?>
+                    <br/>
+                    <div style='margin-left:10px' class='text'><image src='../../pic/ajax-loader.gif'/></div><br/>
+                </div>
+                        </td>
+              </tr>
 
 	   </table>
 
@@ -552,13 +589,17 @@ if ($GLOBALS['patient_id_category_name']) {
     <td>
     <?php
     if ($GLOBALS['advance_directives_warning']) { ?>
-        <div>
-            <span class="text"><b><?php echo htmlspecialchars(xl('Advance Directives'),ENT_NOQUOTES); ?></b></span>
-            <a href="#" class="small" onclick="return advdirconfigure();">
-                (<b><?php echo htmlspecialchars(xl('Manage'),ENT_NOQUOTES); ?></b>)
-            </a>
-        </div>
-		<div class='small'>
+	<?php // advance directives expand collapse widget
+	$widgetTitle = xl("Advance Directives");
+	$widgetLabel = "directives";
+	$widgetButtonLabel = xl("Edit");
+	$widgetButtonLink = "return advdirconfigure();";
+	$widgetButtonClass = "";
+	$linkMethod = "javascript";
+	$bodyClass = "summary_item small";
+	$widgetAuth = true;
+	$fixedWidth = false;
+	expand_collapse_widget($widgetTitle, $widgetLabel, $widgetButtonLabel , $widgetButtonLink, $widgetButtonClass, $linkMethod, $bodyClass, $widgetAuth, $fixedWidth); ?>
 		<?php
           $counterFlag = false; //flag to record whether any categories contain ad records
           $query = "SELECT id FROM categories WHERE name='Advance Directive'";
@@ -597,7 +638,7 @@ if ($GLOBALS['patient_id_category_name']) {
           }
           }
           if (!$counterFlag) {
-              echo htmlspecialchars(xl('None'),ENT_NOQUOTES);
+              echo "&nbsp;&nbsp;" . htmlspecialchars(xl('None'),ENT_NOQUOTES);
           } ?>
       </div>
       <? } ?>
@@ -699,16 +740,18 @@ if ($GLOBALS['patient_id_category_name']) {
 	  "ORDER BY e.pc_eventDate, e.pc_startTime";
 	 $res = sqlStatement($query, array($pid) );
 
-	 if (isset($res) && $res != null) { ?>
-        <div>
-            <span class="text"><b><?php echo htmlspecialchars(xl('Appointments'),ENT_NOQUOTES); ?></b></span>
-            <a href="#" class="small" onclick="return newEvt();" >
-                (<b><?php echo htmlspecialchars(xl('Add'),ENT_NOQUOTES); ?></b>)
-            </a>
-        </div>
-     <?php } ?>
-		<div class='small'>
-			<?php
+	// appointments expand collapse widget
+	$widgetTitle = xl("Appointments");
+	$widgetLabel = "appointments";
+	$widgetButtonLabel = xl("Add");
+	$widgetButtonLink = "return newEvt();";
+	$widgetButtonClass = "";
+	$linkMethod = "javascript";
+	$bodyClass = "summary_item small";
+	$widgetAuth = (isset($res) && $res != null);
+	$fixedWidth = false;
+	expand_collapse_widget($widgetTitle, $widgetLabel, $widgetButtonLabel , $widgetButtonLink, $widgetButtonClass, $linkMethod, $bodyClass, $widgetAuth, $fixedWidth);
+
 			 $count = 0;
 			 while($row = sqlFetchArray($res)) {
 			  $count++;
@@ -731,18 +774,17 @@ if ($GLOBALS['patient_id_category_name']) {
 			  echo htmlspecialchars($row['fname'] . " " . $row['lname'],ENT_NOQUOTES) . "</a><br>\n";
 			 }
 			 if (isset($res) && $res != null) {
-				if ( $count < 1 ) { echo htmlspecialchars(xl('None'),ENT_NOQUOTES); }
+				if ( $count < 1 ) { echo "&nbsp;&nbsp;" . htmlspecialchars(xl('None'),ENT_NOQUOTES); }
 				echo "</div>";
 			 }
 			}
 			?>
 		</div>
 
-		<div id='stats_div' style='float:left'>
+		<div id='stats_div'>
             <br/>
             <div style='margin-left:10px' class='text'><image src='../../pic/ajax-loader.gif'/></div><br/>
         </div>
-
     </td>
     </tr>
     </table>

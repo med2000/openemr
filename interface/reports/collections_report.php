@@ -153,9 +153,14 @@ function endPatient($ptrow) {
   else {
     if ($ptrow['count'] > 1) {
       echo " <tr bgcolor='$bgcolor'>\n";
+      /***************************************************************
       echo "  <td class='detail' colspan='$initial_colspan'>";
       echo "&nbsp;</td>\n";
       echo "  <td class='detotal' colspan='$final_colspan'>&nbsp;Total Patient Balance:</td>\n";
+      ***************************************************************/
+      echo "  <td class='detotal' colspan='" . ($initial_colspan + $final_colspan) .
+        "'>&nbsp;" . xl('Total Patient Balance') . ":</td>\n";
+      /**************************************************************/
       if ($form_age_cols) {
         for ($c = 0; $c < $form_age_cols; ++$c) {
           echo "  <td class='detotal' align='right'>&nbsp;" .
@@ -367,7 +372,7 @@ function checkAll(checked) {
 						   <?php xl('Service Date','e'); ?>:
 						</td>
 						<td>
-						   <input type='text' name='form_from_date' id="form_from_date" size='10' value='<?php echo $form_from_date ?>'
+						   <input type='text' name='form_date' id="form_date" size='10' value='<?php echo $form_date ?>'
 							onkeyup='datekeyup(this,mypcc)' onblur='dateblur(this,mypcc)' title='yyyy-mm-dd'>
 						   <img src='../pic/show_calendar.gif' align='absbottom' width='24' height='22'
 							id='img_from_date' border='0' alt='[?]' style='cursor:pointer'
@@ -1261,8 +1266,8 @@ if (!$_POST['form_csvexport']) {
 <script type="text/javascript" src="../../library/dynarch_calendar_setup.js"></script>
 <script type="text/javascript" src="../../library/js/jquery.1.3.2.js"></script>
 <script language="Javascript">
- Calendar.setup({inputField:"form_date", ifFormat:"%m/%d/%Y", button:"img_from_date"});
- Calendar.setup({inputField:"form_to_date", ifFormat:"%m/%d/%Y", button:"img_to_date"});
+ Calendar.setup({inputField:"form_date", ifFormat:"%Y-%m-%d", button:"img_from_date"});
+ Calendar.setup({inputField:"form_to_date", ifFormat:"%Y-%m-%d", button:"img_to_date"});
 </script>
 </html>
 <?php

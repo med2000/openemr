@@ -709,3 +709,63 @@ CREATE TABLE `syndromic_surveillance` (
 ) ENGINE=MyISAM AUTO_INCREMENT=1 ;
 #EndIf
 
+#IfMissingColumn lists reinjury_id
+ALTER TABLE lists
+  ADD reinjury_id bigint(20)  NOT NULL DEFAULT 0,
+  ADD injury_part varchar(31) NOT NULL DEFAULT '',
+  ADD injury_type varchar(31) NOT NULL DEFAULT '';
+#EndIf
+
+ALTER TABLE layout_options CHANGE description description text;
+
+#IfMissingColumn transactions refer_reply_date
+ALTER TABLE transactions ADD refer_reply_date date DEFAULT NULL;
+#EndIf
+
+#IfMissingColumn transactions reply_related_code
+ALTER TABLE transactions ADD reply_related_code varchar(255) NOT NULL DEFAULT '';
+#EndIf
+
+#IfNotTable extended_log
+CREATE TABLE `extended_log` (
+  `id`          bigint(20)   NOT NULL AUTO_INCREMENT,
+  `date`        datetime     DEFAULT NULL,
+  `event`       varchar(255) DEFAULT NULL,
+  `user`        varchar(255) DEFAULT NULL,
+  `recipient`   varchar(255) DEFAULT NULL,
+  `description` longtext,
+  `patient_id`  bigint(20)   DEFAULT NULL,
+  PRIMARY KEY  (`id`)
+) ENGINE=MyISAM AUTO_INCREMENT=1;
+#EndIf
+
+#IfNotRow2D list_options list_id lists option_id disclosure_type
+INSERT INTO list_options ( list_id, option_id, title, seq, is_default ) VALUES ('lists'   ,'disclosure_type','Disclosure Type', 1,0);
+INSERT INTO list_options ( list_id, option_id, title, seq, is_default ) VALUES ('disclosure_type', 'disclosure-treatment', 'Treatment', 10, 0);
+INSERT INTO list_options ( list_id, option_id, title, seq, is_default ) VALUES ('disclosure_type', 'disclosure-payment', 'Payment', 20, 0);
+INSERT INTO list_options ( list_id, option_id, title, seq, is_default ) VALUES ('disclosure_type', 'disclosure-healthcareoperations', 'Health Care Operations', 30, 0);
+#EndIf
+
+#IfNotTable user_settings
+CREATE TABLE `user_settings` (
+  `setting_user`  bigint(20)   NOT NULL DEFAULT 0,
+  `setting_label` varchar(63)  NOT NULL,
+  `setting_value` varchar(255) NOT NULL DEFAULT '',
+  PRIMARY KEY (`setting_user`, `setting_label`)
+) ENGINE=MyISAM;
+INSERT INTO user_settings ( setting_user, setting_label, setting_value ) VALUES (0, 'allergy_ps_expand', '1');
+INSERT INTO user_settings ( setting_user, setting_label, setting_value ) VALUES (0, 'appointments_ps_expand', '1');
+INSERT INTO user_settings ( setting_user, setting_label, setting_value ) VALUES (0, 'demographics_ps_expand', '0');
+INSERT INTO user_settings ( setting_user, setting_label, setting_value ) VALUES (0, 'dental_ps_expand', '1');
+INSERT INTO user_settings ( setting_user, setting_label, setting_value ) VALUES (0, 'directives_ps_expand', '1');
+INSERT INTO user_settings ( setting_user, setting_label, setting_value ) VALUES (0, 'disclosures_ps_expand', '0');
+INSERT INTO user_settings ( setting_user, setting_label, setting_value ) VALUES (0, 'immunizations_ps_expand', '1');
+INSERT INTO user_settings ( setting_user, setting_label, setting_value ) VALUES (0, 'insurance_ps_expand', '0');
+INSERT INTO user_settings ( setting_user, setting_label, setting_value ) VALUES (0, 'medical_problem_ps_expand', '1');
+INSERT INTO user_settings ( setting_user, setting_label, setting_value ) VALUES (0, 'medication_ps_expand', '1');
+INSERT INTO user_settings ( setting_user, setting_label, setting_value ) VALUES (0, 'pnotes_ps_expand', '0');
+INSERT INTO user_settings ( setting_user, setting_label, setting_value ) VALUES (0, 'prescriptions_ps_expand', '1');
+INSERT INTO user_settings ( setting_user, setting_label, setting_value ) VALUES (0, 'surgery_ps_expand', '1');
+INSERT INTO user_settings ( setting_user, setting_label, setting_value ) VALUES (0, 'vitals_ps_expand', '1');
+#EndIf
+
